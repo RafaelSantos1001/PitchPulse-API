@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PitchPulse Live Score</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            text-align: center;
+            width: 450px;
+        }
+        .status {
+            background-color: #e50914;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .placar-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .time {
+            font-size: 24px;
+            font-weight: bold;
+            width: 40%;
+        }
+        .gols {
+            background-color: #333;
+            font-size: 28px;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 8px;
+            min-width: 40px;
+        }
+        .vs {
+            font-size: 20px;
+            color: #888;
+        }
+        .gols-detalhes {
+            font-size: 13px;
+            color: #aaa;
+            font-style: italic;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 15px;
+        }
+        .stats-section {
+            text-align: left;
+            margin-top: 15px;
+        }
+        .stats-title {
+            font-size: 14px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .stat-label {
+            color: #bbb;
+            font-weight: 500;
+        }
+        .stat-val {
+            font-weight: bold;
+            background: #2a2a2a;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .badge-amarelo { color: #ffd700; }
+        .badge-vermelho { color: #ff4d4d; }
+        .lance-box {
+            margin-top: 20px;
+            background-color: #262626;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ffd700;
+            font-size: 14px;
+            color: #f1c40f;
+            font-style: italic;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="status_jogo" class="status">Carregando...</div>
+    
+    <div class="placar-box">
+        <div id="time_casa" class="time">--</div>
+        <div id="gols_casa" class="gols">0</div>
+        <div class="vs">x</div>
+        <div id="gols_fora" class="gols">0</div>
+        <div id="time_fora" class="time">--</div>
+    </div>
+
+    <div id="detalhes_gols" class="gols-detalhes">Nenhum gol marcado ainda.</div>
+
+    <div class="stats-section">
+        <div class="stats-title">Estatísticas da Partida</div>
+        
+        <div class="stat-row">
+            <span id="escanteios_casa" class="stat-val">0</span>
+            <span class="stat-label">⛳ Escanteios</span>
+            <span id="escanteios_fora" class="stat-val">0</span>
+        </div>
+
+        <div class="stat-row">
+            <span id="faltas_casa" class="stat-val">0</span>
+            <span class="stat-label">🏃 Faltas Cometidas</span>
+            <span id="faltas_fora" class="stat-val">0</span>
+        </div>
+
+        <div class="stat-row">
+            <span id="amarelos_casa" class="stat-val badge-amarelo">0</span>
+            <span class="stat-label">🟨 Cartões Amarelos</span>
+            <span id="amarelos_fora" class="stat-val badge-amarelo">0</span>
+        </div>
+
+        <div class="stat-row">
+            <span id="vermelhos_casa" class="stat-val badge-vermelho">0</span>
+            <span class="stat-label">🟥 Cartões Vermelhos</span>
+            <span id="vermelhos_fora" class="stat-val badge-vermelho">0</span>
+        </div>
+    </div>
+
+    <div id="ultimo_lance" class="lance-box">Aguardando lances da partida...</div>
+</div>
+
+<script>
+    async function atualizarPlacar() {
+        try {
+            const resposta = await fetch('http://127.0.0.1:8000/placar');
+            const dados = await resposta.json();
+
+            if (dados.erro) {
+                document.getElementById('status_jogo').innerText = "ERRO NOS DADOS";
+                document.getElementById('status_jogo').style.backgroundColor = "#e50914";
+                return;
+            }
+
+            // Atualiza dados principais
+            document.getElementById('time_casa').innerText = dados.time_casa;
+            document.getElementById('time_fora').innerText = dados.time_fora;
+            document.getElementById('gols_casa').innerText = dados.gols_casa;
+            document.getElementById('gols_fora').innerText = dados.gols_fora;
+            document.getElementById('status_jogo').innerText = dados.status_jogo;
+            document.getElementById('status_jogo').style.backgroundColor = "#27ae60"; // Verde se OK
+            document.getElementById('ultimo_lance').innerText = "📢 Último Lance: " + dados.ultimo_lance;
+
+            // Atualiza novos campos e autores dos gols
+            document.getElementById('detalhes_gols').innerText = dados.detalhes_gols || "Nenhum gol marcado ainda.";
+            document.getElementById('escanteios_casa').innerText = dados.escanteios_casa;
+            document.getElementById('escanteios_fora').innerText = dados.escanteios_fora;
+            document.getElementById('faltas_casa').innerText = dados.faltas_casa;
+            document.getElementById('faltas_fora').innerText = dados.faltas_fora;
+            document.getElementById('amarelos_casa').innerText = dados.cartoes_amarelos_casa;
+            document.getElementById('amarelos_fora').innerText = dados.cartoes_amarelos_fora;
+            document.getElementById('vermelhos_casa').innerText = dados.cartoes_vermelhos_casa;
+            document.getElementById('vermelhos_fora').innerText = dados.cartoes_vermelhos_fora;
+
+        } catch (erro) {
+            document.getElementById('status_jogo').innerText = "ERRO DE CONEXÃO";
+            document.getElementById('status_jogo').style.backgroundColor = "#e50914";
+        }
+    }
+
+    // Executa imediatamente e depois a cada 5 segundos para atualizações rápidas
+    atualizarPlacar();
+    setInterval(atualizarPlacar, 5000);
+</script>
+
+</body>
+</html>

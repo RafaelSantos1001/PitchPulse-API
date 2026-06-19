@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Serviço 1: O Banco de Dados Relacional
+  banco_pitchpulse:
+    image: postgres:15
+    container_name: container_banco_pitchpulse
+    environment:
+      POSTGRES_DB: meu_banco
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: senha_secreta
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - dados_postgres:/var/lib/postgresql/data
+    networks:
+      - rede_pitchpulse
+
+  # Serviço 2: O Servidor Web da sua API
+  api_fastapi:
+    build: .
+    container_name: container_api_pitchpulse
+    command: uvicorn app.api:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/code/app
+    depends_on:
+      - banco_pitchpulse
+    networks:
+      - rede_pitchpulse
+
+# Serviço 3: O Robô que vai buscar os dados reais
+  scraper_futebol:
+    build: .
+    container_name: container_scraper_pitchpulse
+    command: python app/scraper.py
+    volumes:
+      - .:/code
+    environment:
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      - banco_pitchpulse
+    networks:
+      - rede_pitchpulse
+
+networks:
+  rede_pitchpulse:
+    driver: bridge
+
+volumes:
+  dados_postgres:
