@@ -1,24 +1,12 @@
--- Criar tabela de placares dos jogos
-CREATE TABLE IF NOT EXISTS placar_futebol (
-    id SERIAL PRIMARY KEY,
-    time_casa VARCHAR(50) NOT NULL,
-    time_fora VARCHAR(50) NOT NULL,
-    gols_casa INTEGER DEFAULT 0,
-    gols_fora INTEGER DEFAULT 0,
-    status VARCHAR(10) DEFAULT 'EM_BREVE'
-);
-
--- Criar tabela de classificação dos grupos
-CREATE TABLE IF NOT EXISTS classificacao_grupos (
-    id SERIAL PRIMARY KEY,
-    grupo VARCHAR(1) NOT NULL,
-    time_nome VARCHAR(50) UNIQUE NOT NULL,
-    pontos INTEGER DEFAULT 0,
-    jogos INTEGER DEFAULT 0,
-    vitorias INTEGER DEFAULT 0,
-    empates INTEGER DEFAULT 0,
-    derrotas INTEGER DEFAULT 0,
-    gols_pro INTEGER DEFAULT 0,
-    gols_contra INTEGER DEFAULT 0,
-    saldo_gols INTEGER DEFAULT 0
+CREATE TABLE IF NOT EXISTS partidas (    id_match VARCHAR(50) PRIMARY KEY,
+    numero_jogo INT,
+    data_jogo TIMESTAMP,
+    time_casa VARCHAR(100),
+    time_fora VARCHAR(100),
+    gols_casa INT,
+    gols_fora INT,
+    fase VARCHAR(100),
+    estadio VARCHAR(100),
+    cidade VARCHAR(100),
+    status_jogo VARCHAR(10)
 );
