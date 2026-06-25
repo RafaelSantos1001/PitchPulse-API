@@ -3,201 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PitchPulse Live Score</title>
+    <title>PitchPulse - FIFA World Cup 2026</title>
     <style>
         body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .header-nav {
             display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
+            gap: 15px;
+            margin-bottom: 30px;
         }
-        .container {
-            background-color: #1e1e1e;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            text-align: center;
-            width: 450px;
-        }
-        .status {
-            background-color: #e50914;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 14px;
+        .nav-btn {
+            padding: 10px 24px;
+            font-size: 16px;
             font-weight: bold;
-            display: inline-block;
-            margin-bottom: 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            background-color: #ddd;
+            color: #333;
+            transition: all 0.2s ease;
         }
-        .placar-box {
+        .nav-btn.active {
+            background-color: #111;
+            color: white;
+        }
+        .secao { display: none; max-width: 1000px; margin: 0 auto; }
+        .secao.active { display: block; }
+        
+        .container-jogos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 15px;
+            border-left: 5px solid #007bff;
+        }
+        .placar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-        }
-        .time {
-            font-size: 24px;
+            margin: 15px 0;
+            font-size: 18px;
             font-weight: bold;
-            width: 40%;
         }
-        .gols {
-            background-color: #333;
-            font-size: 28px;
-            font-weight: bold;
-            padding: 10px 15px;
+        .gols { background: #eee; padding: 5px 10px; border-radius: 4px; }
+        
+        .grupo-container {
+            background: white;
             border-radius: 8px;
-            min-width: 40px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            padding: 15px;
         }
-        .vs {
-            font-size: 20px;
-            color: #888;
-        }
-        .gols-detalhes {
-            font-size: 13px;
-            color: #aaa;
-            font-style: italic;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 15px;
-        }
-        .stats-section {
-            text-align: left;
-            margin-top: 15px;
-        }
-        .stats-title {
-            font-size: 14px;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        .grupo-titulo {
+            font-size: 18px;
+            font-weight: bold;
             margin-bottom: 10px;
-            text-align: center;
-            border-bottom: 1px solid #333;
+            border-bottom: 2px solid #eee;
             padding-bottom: 5px;
         }
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 8px 0;
-            font-size: 14px;
-        }
-        .stat-label {
-            color: #bbb;
-            font-weight: 500;
-        }
-        .stat-val {
-            font-weight: bold;
-            background: #2a2a2a;
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-        .badge-amarelo { color: #ffd700; }
-        .badge-vermelho { color: #ff4d4d; }
-        .lance-box {
-            margin-top: 20px;
-            background-color: #262626;
-            padding: 12px;
-            border-radius: 8px;
-            border-left: 4px solid #ffd700;
-            font-size: 14px;
-            color: #f1c40f;
-            font-style: italic;
-            text-align: left;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        th { color: #666; font-size: 12px; text-transform: uppercase; }
+        .text-center { text-align: center; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="status_jogo" class="status">Carregando...</div>
-    
-    <div class="placar-box">
-        <div id="time_casa" class="time">--</div>
-        <div id="gols_casa" class="gols">0</div>
-        <div class="vs">x</div>
-        <div id="gols_fora" class="gols">0</div>
-        <div id="time_fora" class="time">--</div>
+    <h1 style="text-align: center; color: #333;">PitchPulse - Painel da Copa</h1>
+
+    <div class="header-nav">
+        <button class="nav-btn active" onclick="alternarAbas('jogos')">Matches</button>
+        <button class="nav-btn" onclick="alternarAbas('tabela')">Table</button>
     </div>
 
-    <div id="detalhes_gols" class="gols-detalhes">Nenhum gol marcado ainda.</div>
-
-    <div class="stats-section">
-        <div class="stats-title">Estatísticas da Partida</div>
-        
-        <div class="stat-row">
-            <span id="escanteios_casa" class="stat-val">0</span>
-            <span class="stat-label">⛳ Escanteios</span>
-            <span id="escanteios_fora" class="stat-val">0</span>
-        </div>
-
-        <div class="stat-row">
-            <span id="faltas_casa" class="stat-val">0</span>
-            <span class="stat-label">🏃 Faltas Cometidas</span>
-            <span id="faltas_fora" class="stat-val">0</span>
-        </div>
-
-        <div class="stat-row">
-            <span id="amarelos_casa" class="stat-val badge-amarelo">0</span>
-            <span class="stat-label">🟨 Cartões Amarelos</span>
-            <span id="amarelos_fora" class="stat-val badge-amarelo">0</span>
-        </div>
-
-        <div class="stat-row">
-            <span id="vermelhos_casa" class="stat-val badge-vermelho">0</span>
-            <span class="stat-label">🟥 Cartões Vermelhos</span>
-            <span id="vermelhos_fora" class="stat-val badge-vermelho">0</span>
-        </div>
+    <div id="aba-jogos" class="secao active">
+        <div class="container-jogos" id="lista-partidas"></div>
     </div>
 
-    <div id="ultimo_lance" class="lance-box">Aguardando lances da partida...</div>
-</div>
+    <div id="aba-tabela" class="secao">
+        <div id="grupos-classificacao"></div>
+    </div>
 
-<script>
-    async function atualizarPlacar() {
-        try {
-            const resposta = await fetch('http://127.0.0.1:8000/placar');
-            const dados = await resposta.json();
+    <script>
+        function alternarAbas(aba) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.secao').forEach(s => s.classList.remove('active'));
 
-            if (dados.erro) {
-                document.getElementById('status_jogo').innerText = "ERRO NOS DADOS";
-                document.getElementById('status_jogo').style.backgroundColor = "#e50914";
-                return;
+            if (aba === 'jogos') {
+                document.querySelector('button[onclick*="jogos"]').classList.add('active');
+                document.getElementById('aba-jogos').classList.add('active');
+            } else {
+                document.querySelector('button[onclick*="tabela"]').classList.add('active');
+                document.getElementById('aba-tabela').classList.add('active');
+                carregarClassificacao();
             }
-
-            // Atualiza dados principais
-            document.getElementById('time_casa').innerText = dados.time_casa;
-            document.getElementById('time_fora').innerText = dados.time_fora;
-            document.getElementById('gols_casa').innerText = dados.gols_casa;
-            document.getElementById('gols_fora').innerText = dados.gols_fora;
-            document.getElementById('status_jogo').innerText = dados.status_jogo;
-            document.getElementById('status_jogo').style.backgroundColor = "#27ae60"; // Verde se OK
-            document.getElementById('ultimo_lance').innerText = "📢 Último Lance: " + dados.ultimo_lance;
-
-            // Atualiza novos campos e autores dos gols
-            document.getElementById('detalhes_gols').innerText = dados.detalhes_gols || "Nenhum gol marcado ainda.";
-            document.getElementById('escanteios_casa').innerText = dados.escanteios_casa;
-            document.getElementById('escanteios_fora').innerText = dados.escanteios_fora;
-            document.getElementById('faltas_casa').innerText = dados.faltas_casa;
-            document.getElementById('faltas_fora').innerText = dados.faltas_fora;
-            document.getElementById('amarelos_casa').innerText = dados.cartoes_amarelos_casa;
-            document.getElementById('amarelos_fora').innerText = dados.cartoes_amarelos_fora;
-            document.getElementById('vermelhos_casa').innerText = dados.cartoes_vermelhos_casa;
-            document.getElementById('vermelhos_fora').innerText = dados.cartoes_vermelhos_fora;
-
-        } catch (erro) {
-            document.getElementById('status_jogo').innerText = "ERRO DE CONEXÃO";
-            document.getElementById('status_jogo').style.backgroundColor = "#e50914";
         }
-    }
 
-    // Executa imediatamente e depois a cada 5 segundos para atualizações rápidas
-    atualizarPlacar();
-    setInterval(atualizarPlacar, 5000);
-</script>
+        async function carregarPartidas() {
+            const container = document.getElementById('lista-partidas');
+            try {
+                const response = await fetch('http://localhost:8000/partidas');
+                const partidas = await response.json();
+                container.innerHTML = '';
 
+                partidas.forEach(jogo => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    
+                    let badgeHTML = '';
+
+                    // Lógica visual baseada nas melhorias que colocamos no backend
+                    if (jogo.status_jogo === '3') {
+                        // Se estiver AO VIVO (Simulador ativo)
+                        card.style.borderLeft = '5px solid #dc3545';
+                        card.style.background = '#fff5f5';
+                        badgeHTML = `<span style="background: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 10px;">${jogo.status_texto}</span>`;
+                    } else if (jogo.status_jogo === '0') {
+                        // Se estiver finalizado (FT)
+                        card.style.borderLeft = '5px solid #28a745';
+                        badgeHTML = `<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 10px;">${jogo.status_texto}</span>`;
+                    } else {
+                        // Se o jogo não tiver começado, mostra a data formatada de cinza e borda azul padrão
+                        card.style.borderLeft = '5px solid #007bff';
+                        card.style.background = '#ffffff';
+                        badgeHTML = `<span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 10px;">${jogo.status_texto}</span>`;
+                    }
+
+                    card.innerHTML = `
+                        <div style="font-size:11px; color:#777; font-weight:bold;">JOGO ${jogo.numero_jogo} ${badgeHTML}</div>
+                        <div class="placar">
+                            <span>${jogo.time_casa}</span>
+                            <span class="gols">${jogo.gols_casa} ${jogo.divisor} ${jogo.gols_fora}</span>
+                            <span>${jogo.time_fora}</span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function carregarClassificacao() {
+            const container = document.getElementById('grupos-classificacao');
+            try {
+                const response = await fetch('http://localhost:8000/classificacao');
+                const readiness = await response.json();
+                container.innerHTML = '';
+
+                for (const [grupoNome, times] of Object.entries(readiness)) {
+                    const grupoDiv = document.createElement('div');
+                    grupoDiv.className = 'grupo-container';
+
+                    let tableHtml = `
+                        <div class="grupo-titulo">${grupoNome}</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th class="text-center">P</th>
+                                    <th class="text-center">J</th>
+                                    <th class="text-center">V</th>
+                                    <th class="text-center">SG</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    times.forEach((time, idx) => {
+                        tableHtml += `
+                            <tr>
+                                <td><strong>${idx + 1}.</strong> ${time.time}</td>
+                                <td class="text-center" style="font-weight:bold;">${time.pontos}</td>
+                                <td class="text-center">${time.jogos}</td>
+                                <td class="text-center">${time.vitorias}</td>
+                                <td class="text-center">${time.sg}</td>
+                            </tr>
+                        `;
+                    });
+
+                    tableHtml += `</tbody></table>`;
+                    grupoDiv.innerHTML = tableHtml;
+                    container.appendChild(grupoDiv);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        carregarPartidas();
+        setInterval(() => {
+            carregarPartidas();
+            if (document.getElementById('aba-tabela').classList.contains('active')) {
+                carregarClassificacao();
+            }
+        }, 3000);
+    </script>
 </body>
 </html>

@@ -34,6 +34,20 @@ O desenvolvimento foi dividido estrategicamente para garantir a consistência do
 
 ---
 
+## 📑 Diário de Bordo & Desafios Técnicos
+
+Durante a execução da Fase 1 e o início dos testes de ingestão de dados ao vivo com a API do calendário oficial, identificamos dois gargalos críticos na engenharia de dados que moldaram nossa estratégia de arquitetura:
+
+### 1. Latência e Ingestão em Lotes (Cache do Endpoint)
+* **O Problema:** O endpoint público principal de distribuição de calendário foi desenhado para consolidação histórica. Ele opera em camadas pesadas de cache, preenchendo dados de placares e pós-jogo (como público e arbitragem oficial) horas após o encerramento do evento. Para um painel interativo em tempo real, isso causava atrasos.
+* **A Solução:** Decidimos implementar uma **Estratégia Híbrida**. O banco de dados PostgreSQL continua sendo alimentado com a estrutura pesada deste endpoint (mantendo nossa base offline estável com estádios, árbitros e chaves de grupos), mas o scraper será desacoplado para consumir endpoints secundários mais leves ou raspagem secundária dedicada exclusivamente aos 90 minutos de jogo ativo.
+
+### 2. Bloqueio de Segurança Anti-Bot (Camada de Rede)
+* **O Problema:** Ao rodar o worker de raspagem de dentro do container Docker, o servidor de borda de dados disparou bloqueios de segurança contra requisições automatizadas da biblioteca padrão `python-requests`, gerando falhas no parse de payloads JSON estruturados devido ao mascaramento por barreiras anti-bot.
+* **A Solução:** Ajustamos o fluxo de requisições do scraper para simular o comportamento de um agente legítimo. Injetamos cabeçalhos HTTP customizados (`User-Agent` de navegadores modernos, `Origin`, `Referer`), contornando a validação superficial do servidor e garantindo o tráfego limpo das requisições dentro do ambiente conteinerizado.
+
+---
+
 ## 🔧 Como Executar o Projeto Localmente
 
 ### Pré-requisitos

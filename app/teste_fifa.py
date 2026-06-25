@@ -1,7 +1,7 @@
 import requests
 import json
 
-# A URL da API oculta que você pescou no F12!
+
 URL_API = "https://api.fifa.com/api/v3/calendar/matches?language=en&count=500&idSeason=285023"
 
 headers = {
@@ -18,16 +18,16 @@ def analisar_api_fifa():
             dados = resposta.json()
             print("✅ GOLAÇO! Resposta recebida com sucesso da API!")
             
-            # Vamos salvar o JSON completo na sua pasta app/ para estudarmos os campos
+           
             with open("app/estrutura_copa.json", "w", encoding="utf-8") as f:
                 json.dump(dados, f, indent=4, ensure_ascii=False)
             print("💾 O JSON estruturado foi salvo em 'app/estrutura_copa.json'!")
             
-            # Verificando as chaves principais do dicionário retornado
+            
             if isinstance(dados, dict):
                 print(f"\nChaves principais do JSON: {list(dados.keys())}")
                 
-                # Se a chave clássica 'Results' estiver no topo, vamos ver quantos jogos vieram
+                
                 if "Results" in dados:
                     total_jogos = len(dados["Results"])
                     print(f"📊 Total de partidas encontradas nesse payload: {total_jogos}")
@@ -35,7 +35,7 @@ def analisar_api_fifa():
                     if total_jogos > 0:
                         print("\n🔍 Analisando a estrutura do primeiro jogo:")
                         primeiro_jogo = dados["Results"][0]
-                        # Printa as chaves de dentro de um jogo para sabermos onde ficam os gols e os times
+                        
                         print(f"Campos disponíveis no objeto do jogo: {list(primeiro_jogo.keys())}")
             else:
                 print(f"⚠️ O formato retornado é uma lista com {len(dados)} elementos.")

@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Serviço 1: O Banco de Dados Relacional
+  
   banco_pitchpulse:
     image: postgres:15
     container_name: container_banco_pitchpulse
@@ -17,7 +17,7 @@ services:
     networks:
       - rede_pitchpulse
 
-  # Serviço 2: O Servidor Web da sua API
+  
   api_fastapi:
     build: .
     container_name: container_api_pitchpulse
@@ -31,7 +31,7 @@ services:
     networks:
       - rede_pitchpulse
 
-# Serviço 3: O Robô que vai buscar os dados reais
+
   scraper_futebol:
     build: .
     container_name: container_scraper_pitchpulse
