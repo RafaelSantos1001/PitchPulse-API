@@ -3,207 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PitchPulse - FIFA World Cup 2026</title>
+    <title>PitchPulse API - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 20px;
+            background-color: #0d1117;
         }
-        .header-nav {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        .nav-btn {
-            padding: 10px 24px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            background-color: #ddd;
-            color: #333;
-            transition: all 0.2s ease;
-        }
-        .nav-btn.active {
-            background-color: #111;
-            color: white;
-        }
-        .secao { display: none; max-width: 1000px; margin: 0 auto; }
-        .secao.active { display: block; }
-        
-        .container-jogos {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            padding: 15px;
-            border-left: 5px solid #007bff;
-        }
-        .placar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 15px 0;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        .gols { background: #eee; padding: 5px 10px; border-radius: 4px; }
-        
-        .grupo-container {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
-            padding: 15px;
-        }
-        .grupo-titulo {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 5px;
-        }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
-        th { color: #666; font-size: 12px; text-transform: uppercase; }
-        .text-center { text-align: center; }
     </style>
 </head>
-<body>
+<body class="text-gray-200 font-sans min-h-screen pb-12">
 
-    <h1 style="text-align: center; color: #333;">PitchPulse - Painel da Copa</h1>
+    <header class="border-b border-[#30363d] bg-[#161b22] sticky top-0 z-50 shadow-sm backdrop-blur-md bg-opacity-80">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg font-black tracking-wider text-sm shadow-md">PP</div>
+                <h1 class="text-xl font-bold tracking-tight text-white">PitchPulse <span class="text-blue-500 font-medium text-sm">Dashboard</span></h1>
+            </div>
+            <div id="status-api" class="text-xs text-gray-400 bg-gray-900 border border-gray-800 px-3 py-1 rounded-md animate-pulse">
+                Conectando à API...
+            </div>
+        </div>
+    </header>
 
-    <div class="header-nav">
-        <button class="nav-btn active" onclick="alternarAbas('jogos')">Matches</button>
-        <button class="nav-btn" onclick="alternarAbas('tabela')">Table</button>
-    </div>
+    <main class="max-w-7xl mx-auto px-4 mt-8 space-y-12">
+        
+        <section>
+            <div class="flex items-center space-x-2 mb-6">
+                <span class="w-2 h-5 bg-blue-500 rounded-full"></span>
+                <h2 class="text-lg font-bold text-white uppercase tracking-wider">Confrontos da Rodada</h2>
+            </div>
+            <div id="grid-confrontos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="text-gray-500 italic text-sm p-4 col-span-full">Aguardando dados dos jogos...</div>
+            </div>
+        </section>
 
-    <div id="aba-jogos" class="secao active">
-        <div class="container-jogos" id="lista-partidas"></div>
-    </div>
+        <hr class="border-[#30363d]">
 
-    <div id="aba-tabela" class="secao">
-        <div id="grupos-classificacao"></div>
-    </div>
+        <section>
+            <div class="flex items-center space-x-2 mb-6">
+                <span class="w-2 h-5 bg-green-500 rounded-full"></span>
+                <h2 class="text-lg font-bold text-white uppercase tracking-wider">Tabelas de Classificação</h2>
+            </div>
+            <div id="container-grupos" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="text-gray-500 italic text-sm p-4 col-span-full">Aguardando dados das tabelas...</div>
+            </div>
+        </section>
+
+    </main>
 
     <script>
-        function alternarAbas(aba) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.secao').forEach(s => s.classList.remove('active'));
-
-            if (aba === 'jogos') {
-                document.querySelector('button[onclick*="jogos"]').classList.add('active');
-                document.getElementById('aba-jogos').classList.add('active');
-            } else {
-                document.querySelector('button[onclick*="tabela"]').classList.add('active');
-                document.getElementById('aba-tabela').classList.add('active');
-                carregarClassificacao();
-            }
-        }
-
-        async function carregarPartidas() {
-            const container = document.getElementById('lista-partidas');
+        async function carregarDadosDoDashboard() {
             try {
-                const response = await fetch('http://localhost:8000/partidas');
-                const partidas = await response.json();
-                container.innerHTML = '';
+                // 1. CARREGA OS CARDS DE CONFRONTOS DIRETAMENTE DO BANCO
+                const respostaPartidas = await fetch('http://localhost:8000/partidas');
+                const dadosPartidas = await respostaPartidas.json();
+                
+                document.getElementById('status-api').innerText = `Conectado: ${dadosPartidas.total_partidas} Jogos`;
+                document.getElementById('status-api').className = "text-xs text-green-400 bg-green-950/50 border border-green-800 px-3 py-1 rounded-md";
 
-                partidas.forEach(jogo => {
-                    const card = document.createElement('div');
-                    card.className = 'card';
+                const grid = document.getElementById('grid-confrontos');
+                grid.innerHTML = ''; 
+
+                dadosPartidas.partidas.forEach(jogo => {
+                    let statusTexto = 'Agendado';
+                    let statusClasse = 'bg-gray-800 text-gray-300';
                     
-                    let badgeHTML = '';
-
-                    // Lógica visual baseada nas melhorias que colocamos no backend
-                    if (jogo.status_jogo === '3') {
-                        // Se estiver AO VIVO (Simulador ativo)
-                        card.style.borderLeft = '5px solid #dc3545';
-                        card.style.background = '#fff5f5';
-                        badgeHTML = `<span style="background: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 10px;">${jogo.status_texto}</span>`;
-                    } else if (jogo.status_jogo === '0') {
-                        // Se estiver finalizado (FT)
-                        card.style.borderLeft = '5px solid #28a745';
-                        badgeHTML = `<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 10px;">${jogo.status_texto}</span>`;
-                    } else {
-                        // Se o jogo não tiver começado, mostra a data formatada de cinza e borda azul padrão
-                        card.style.borderLeft = '5px solid #007bff';
-                        card.style.background = '#ffffff';
-                        badgeHTML = `<span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 10px;">${jogo.status_texto}</span>`;
+                    if (jogo.status === 3) {
+                        statusTexto = 'Ao Vivo';
+                        statusClasse = 'bg-red-950 text-red-400 border border-red-800 animate-pulse';
+                    } else if (jogo.status === 0) {
+                        statusTexto = 'Encerrado';
+                        statusClasse = 'bg-[#1f242c] text-gray-400 border border-[#30363d]';
                     }
 
-                    card.innerHTML = `
-                        <div style="font-size:11px; color:#777; font-weight:bold;">JOGO ${jogo.numero_jogo} ${badgeHTML}</div>
-                        <div class="placar">
-                            <span>${jogo.time_casa}</span>
-                            <span class="gols">${jogo.gols_casa} ${jogo.divisor} ${jogo.gols_fora}</span>
-                            <span>${jogo.time_fora}</span>
+                    const golsCasa = jogo.gols_casa !== null ? jogo.gols_casa : '-';
+                    const golsFora = jogo.gols_fora !== null ? jogo.gols_fora : '-';
+
+                    grid.innerHTML += `
+                        <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-4 shadow-md hover:border-blue-500/50 transition-all duration-200">
+                            <div class="flex justify-between items-center text-xs text-gray-400 mb-4">
+                                <span class="font-semibold tracking-wider text-gray-400">GRUPO ${jogo.grupo_nome} • #${jogo.id_match}</span>
+                                <span class="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wide ${statusClasse}">${statusTexto}</span>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-medium text-white text-base">${jogo.casa_nome} ${jogo.casa_emoji}</span>
+                                    <span class="text-lg font-bold text-white bg-[#0d1117] border border-[#30363d] px-3 py-1 rounded-lg w-10 text-center shadow-inner">${golsCasa}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-medium text-white text-base">${jogo.fora_nome} ${jogo.fora_emoji}</span>
+                                    <span class="text-lg font-bold text-white bg-[#0d1117] border border-[#30363d] px-3 py-1 rounded-lg w-10 text-center shadow-inner">${golsFora}</span>
+                                </div>
+                            </div>
                         </div>
                     `;
-                    container.appendChild(card);
                 });
-            } catch (e) { console.error(e); }
-        }
 
-        async function carregarClassificacao() {
-            const container = document.getElementById('grupos-classificacao');
-            try {
-                const response = await fetch('http://localhost:8000/classificacao');
-                const readiness = await response.json();
-                container.innerHTML = '';
+                // 2. CARREGA AS TABELAS DE CLASSIFICAÇÃO INTEGRADAS POR SQL
+                const respostaGrupos = await fetch('http://localhost:8000/grupos');
+                const dadosGrupos = await respostaGrupos.json();
 
-                for (const [grupoNome, times] of Object.entries(readiness)) {
-                    const grupoDiv = document.createElement('div');
-                    grupoDiv.className = 'grupo-container';
+                const containerGrupos = document.getElementById('container-grupos');
+                containerGrupos.innerHTML = ''; 
 
-                    let tableHtml = `
-                        <div class="grupo-titulo">${grupoNome}</div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th class="text-center">P</th>
-                                    <th class="text-center">J</th>
-                                    <th class="text-center">V</th>
-                                    <th class="text-center">SG</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
+                Object.keys(dadosGrupos).forEach(nomeGrupo => {
+                    const times = dadosGrupos[nomeGrupo];
 
-                    times.forEach((time, idx) => {
-                        tableHtml += `
-                            <tr>
-                                <td><strong>${idx + 1}.</strong> ${time.time}</td>
-                                <td class="text-center" style="font-weight:bold;">${time.pontos}</td>
-                                <td class="text-center">${time.jogos}</td>
-                                <td class="text-center">${time.vitorias}</td>
-                                <td class="text-center">${time.sg}</td>
+                    let linhasTabelaHtml = '';
+                    times.forEach((time, index) => {
+                        const posClasse = index < 2 ? 'text-blue-400 font-bold' : 'text-gray-500';
+                        const saldoClasse = time.saldo_gols > 0 ? 'text-green-400' : (time.saldo_gols < 0 ? 'text-red-400' : 'text-gray-400');
+                        const sinalSaldo = time.saldo_gols > 0 ? '+' : '';
+
+                        linhasTabelaHtml += `
+                            <tr class="hover:bg-[#1f242c]/50 transition-colors">
+                                <td class="p-3 ${posClasse}">${index + 1}º</td>
+                                <td class="p-3 font-medium text-white">${time.nome}</td>
+                                <td class="p-3 text-center font-bold text-white">${time.points || time.pontos}</td>
+                                <td class="p-3 text-center text-gray-400">${time.jogos}</td>
+                                <td class="p-3 text-center ${saldoClasse}">${sinalSaldo}${time.saldo_gols}</td>
                             </tr>
                         `;
                     });
 
-                    tableHtml += `</tbody></table>`;
-                    grupoDiv.innerHTML = tableHtml;
-                    container.appendChild(grupoDiv);
-                }
-            } catch (e) { console.error(e); }
+                    containerGrupos.innerHTML += `
+                        <div class="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-md">
+                            <div class="p-4 bg-[#1f242c] border-b border-[#30363d] font-bold text-white text-sm tracking-wide uppercase">${nomeGrupo}</div>
+                            <table class="w-full text-left text-sm text-gray-300">
+                                <thead class="bg-[#161b22] text-xs text-gray-400 uppercase border-b border-[#30363d]">
+                                    <tr>
+                                        <th class="p-3 w-12">Pos</th>
+                                        <th class="p-3">Seleção</th>
+                                        <th class="p-3 text-center w-12">P</th>
+                                        <th class="p-3 text-center w-12">J</th>
+                                        <th class="p-3 text-center w-12">SG</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[#30363d]">
+                                    ${linhasTabelaHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                });
+
+            } catch (erro) {
+                console.error("Erro ao processar dados do Dashboard:", erro);
+                const statusApi = document.getElementById('status-api');
+                statusApi.innerText = "Erro ao Conectar";
+                statusApi.className = "text-xs text-red-400 bg-red-950/50 border border-red-800 px-3 py-1 rounded-md";
+            }
         }
 
-        carregarPartidas();
-        setInterval(() => {
-            carregarPartidas();
-            if (document.getElementById('aba-tabela').classList.contains('active')) {
-                carregarClassificacao();
-            }
-        }, 3000);
+        // Inicializa a carga de dados na tela
+        carregarDadosDoDashboard();
     </script>
 </body>
 </html>

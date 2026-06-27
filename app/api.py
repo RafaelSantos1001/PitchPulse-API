@@ -1,180 +1,156 @@
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from collections import defaultdict
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-app = FastAPI(title="PitchPulse API")
+# Inicializa o app apenas UMA vez com o título correto
+app = FastAPI(title="PitchPulse API", version="1.0.0")
 
+# Configura o CORS corretamente (apenas um bloco)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Permite que o Live Server (porta 5500) aceda à API
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-def conectar_banco():
-    return psycopg2.connect(
-        host=os.getenv("DB_HOST", "container_banco_pitchpulse"),
-        user=os.getenv("DB_USER", "postgres"),
-        password=os.getenv("DB_PASSWORD", "senha_secreta"),
-        database=os.getenv("DB_NAME", "meu_banco")
-    )
-
-
-PLACARES_REAIS = {
-    "NOR-SEN": {"gols_casa": 2, "gols_fora": 1, "status": "0"}, # Noruega 2 x 1 Senegal
-    "FRA-IRQ": {"gols_casa": 3, "gols_fora": 0, "status": "0"}, # França 3 x 0 Iraque
-    "ARG-AUT": {"gols_casa": 1, "gols_fora": 2, "status": "0"}, # Argentina 1 x 2 Áustria
-    "JOR-ALG": {"gols_casa": 1, "gols_fora": 1, "status": "0"}, # Jordânia 1 x 1 Argélia
-}
+# Daqui para baixo continua o seu código normal...
+def obter_conexao_banco():
+    try:
+        conn = psycopg2.connect(
+            host=os.getenv("DB_HOST", "banco_pitchpulse"),
+            database=os.getenv("DB_NAME", "placar_futebol"),
+            user=os.getenv("DB_USER", "postgres"),
+            password=os.getenv("DB_PASSWORD", "postgres_password")
+        )
+        return conn
+    except Exception as e:
+        print(f"❌ [API] Erro ao conectar no PostgreSQL: {e}")
+        return None
 
 @app.get("/")
 def raiz():
-    return {"status": "PitchPulse API rodando com sucesso!"}
+    return {"status": "Online", "projeto": "PitchPulse API", "pedrinho_status": "Pé-quente 👣"}
 
 @app.get("/partidas")
 def listar_partidas():
+    conn = obter_conexao_banco()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Erro interno ao conectar ao banco de dados.")
     try:
-        conexao = conectar_banco()
-        cursor = conexao.cursor(cursor_factory=RealDictCursor)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("""
-            SELECT id_match, numero_jogo, data_jogo, time_casa, time_fora, 
-                   gols_casa, gols_fora, fase, estadio, cidade, status_jogo 
-            FROM partidas 
-            ORDER BY numero_jogo ASC;
+            SELECT 
+                p.id_match, 
+                p.status, 
+                p.gols_casa, 
+                p.gols_fora,
+                p.grupo_nome,
+                t_casa.nome as casa_nome,
+                t_casa.emoji as casa_emoji,
+                t_fora.nome as fora_nome,
+                t_fora.emoji as fora_emoji
+            FROM partidas p
+            JOIN times t_casa ON p.id_casa = t_casa.id_time
+            JOIN times t_fora ON p.id_fora = t_fora.id_time
+            ORDER BY p.id_match ASC;
         """)
         partidas = cursor.fetchall()
         cursor.close()
-        conexao.close()
-        
-        for jogo in partidas:
-            casa = jogo["time_casa"]
-            fora = jogo["time_fora"]
-            chave_jogo = f"{casa}-{fora}"
-            
-            
-            if chave_jogo in PLACARES_REAIS:
-                jogo["gols_casa"] = PLACARES_REAIS[chave_jogo]["gols_casa"]
-                jogo["gols_fora"] = PLACARES_REAIS[chave_jogo]["gols_fora"]
-                jogo["status_jogo"] = PLACARES_REAIS[chave_jogo]["status"]
-
-            status = str(jogo["status_jogo"])
-            
-            if status == "0":
-                jogo["status_texto"] = "FT"
-            elif status == "3":
-                jogo["status_texto"] = "AO VIVO"
-            else:
-                if jogo["data_jogo"]:
-                    dt = jogo["data_jogo"]
-                    jogo["status_texto"] = dt.strftime("%d/%m às %H:%M")
-                else:
-                    jogo["status_texto"] = "A definir"
-                    
-            # Trata exibição visual de jogos futuros não forçados no painel
-            if status == "1" and chave_jogo not in PLACARES_REAIS:
-                jogo["gols_casa"] = ""
-                jogo["gols_fora"] = ""
-                jogo["divisor"] = "vs"
-            else:
-                jogo["divisor"] = "x"
-                
-        return partidas
+        conn.close()
+        return {"total_partidas": len(partidas), "partidas": partidas}
     except Exception as e:
+        if conn: conn.close()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/classificacao")
-def obtener_classificacao():
+@app.get("/grupos")
+def obter_classificacao_grupos():
+    conn = obter_conexao_banco()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Erro ao conectar ao banco.")
+    
     try:
-        conexao = conectar_banco()
-        cursor = conexao.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("""
-            SELECT id_match, numero_jogo, time_casa, time_fora, gols_casa, gols_fora, fase, status_jogo 
-            FROM partidas 
-            WHERE (fase ILIKE '%Stage%' OR fase ILIKE '%Grupo%' OR fase ILIKE '%First%');
-        """)
-        jogos = cursor.fetchall()
-        cursor.close()
-        conexao.close()
-
-        tabela = defaultdict(lambda: {"jogos": 0, "vitorias": 0, "empates": 0, "derrotas": 0, "gp": 0, "gc": 0, "sg": 0, "pontos": 0, "grupo": "Grupo A"})
-        jogos_processados = set()
-
-        for jogo in jogos:
-            num_jogo = jogo["numero_jogo"]
-            if num_jogo in jogos_processados:
-                continue
-                
-            casa = jogo["time_casa"]
-            fora = jogo["time_fora"]
-            chave_jogo = f"{casa}-{fora}"
-
-            if chave_jogo in PLACARES_REAIS:
-                g_casa = PLACARES_REAIS[chave_jogo]["gols_casa"]
-                g_fora = PLACARES_REAIS[chave_jogo]["gols_fora"]
-                status_efetivo = PLACARES_REAIS[chave_jogo]["status"]
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+    
+        cursor.execute("SELECT id_time, nome, grupo, emoji FROM times;")
+        todos_times = cursor.fetchall()
+        
+        grupos = {}
+        mapeamento_nomes = {}
+        
+        for t in todos_times:
+            # Mantendo a lógica de exibição customizada das bandeiras e sufixos
+            siglas = {"Espanha": "ES", "França": "FR", "Brasil": "BR", "Alemanha": "DE", 
+                      "Noruega": "NO", "Japão": "JP", "Uruguai": "UY", "Argentina": "AR", 
+                      "Inglaterra": "Inglaterra 🏴\u200d󠁧󠁢󠁥󠁮󠁧󠁿", "Argélia": "DZ", "Itália": "IT", "Marrocos": "MA"}
+            
+            sufixo = siglas.get(t["nome"], "")
+            if t["nome"] == "Inglaterra":
+                nome_exibicao = "Inglaterra 🏴\u200d󠁧󠁢󠁥󠁮󠁧󠁿"
             else:
+                nome_exibicao = f"{t['nome']} {t['emoji']}".strip()
+            
+            mapeamento_nomes[t["id_time"]] = nome_exibicao
+            nome_grupo = f"Grupo {t['grupo']}"
+            
+            if nome_grupo not in grupos:
+                grupos[nome_grupo] = {}
+                
+            grupos[nome_grupo][nome_exibicao] = {
+                "nome": nome_exibicao, 
+                "pontos": 0, 
+                "jogos": 0, 
+                "gols_pro": 0, 
+                "gols_contra": 0, 
+                "saldo_gols": 0
+            }
+
+        cursor.execute("SELECT id_casa, id_fora, gols_casa, gols_fora, grupo_nome FROM partidas;")
+        partidas = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+
+        for jogo in partidas:
+            if jogo["gols_casa"] is not None and jogo["gols_fora"] is not None:
+                nome_grupo = f"Grupo {jogo['grupo_nome']}"
+                time_casa = mapeamento_nomes.get(jogo["id_casa"])
+                time_fora = mapeamento_nomes.get(jogo["id_fora"])
+                
+                if not time_casa or not time_fora:
+                    continue
+
                 g_casa = jogo["gols_casa"]
                 g_fora = jogo["gols_fora"]
-                status_efetivo = jogo["status_jogo"]
 
+                grupos[nome_grupo][time_casa]["jogos"] += 1
+                grupos[nome_grupo][time_casa]["gols_pro"] += g_casa
+                grupos[nome_grupo][time_casa]["gols_contra"] += g_fora
+
+                grupos[nome_grupo][time_fora]["jogos"] += 1
+                grupos[nome_grupo][time_fora]["gols_pro"] += g_fora
+                grupos[nome_grupo][time_fora]["gols_contra"] += g_casa
+
+                if g_casa > g_fora:
+                    grupos[nome_grupo][time_casa]["pontos"] += 3
+                elif g_fora > g_casa:
+                    grupos[nome_grupo][time_fora]["pontos"] += 3
+                else:
+                    grupos[nome_grupo][time_casa]["pontos"] += 1
+                    grupos[nome_grupo][time_fora]["pontos"] += 1
+
+        resultado_formatado = {}
+        for nome_grupo, times_do_grupo in grupos.items():
+            for t in times_do_grupo.values():
+                t["saldo_gols"] = t["gols_pro"] - t["gols_contra"]
             
-            if status_efetivo != "0" or g_casa is None or g_fora is None:
-                continue
+            times_ordenados = sorted(times_do_grupo.values(), key=lambda x: (x["pontos"], x["saldo_gols"]), reverse=True)
+            resultado_formatado[nome_grupo] = times_ordenados
 
-            if "Desconhecido" in casa or "A definir" in casa or "Placeholder" in casa:
-                continue
+        return resultado_formatado
 
-            jogos_processados.add(num_jogo)
-
-            fase_texto = jogo["fase"]
-            grupo_nome = "Fase de Grupos"
-            if "Group " in fase_texto:
-                grupo_nome = "Grupo " + fase_texto.split("Group ")[1].strip()
-            elif "Grupo " in fase_texto:
-                grupo_nome = "Grupo " + fase_texto.split("Grupo ")[1].strip()
-
-            tabela[casa]["grupo"] = grupo_nome
-            tabela[fora]["grupo"] = grupo_nome
-
-            tabela[casa]["jogos"] += 1
-            tabela[fora]["jogos"] += 1
-            tabela[casa]["gp"] += g_casa
-            tabela[casa]["gc"] += g_fora
-            tabela[fora]["gp"] += g_fora
-            tabela[fora]["gc"] += g_casa
-
-            if g_casa > g_fora:
-                tabela[casa]["vitorias"] += 1
-                tabela[casa]["pontos"] += 3
-                tabela[fora]["derrotas"] += 1
-            elif g_fora > g_casa:
-                tabela[fora]["vitorias"] += 1
-                tabela[fora]["pontos"] += 3
-                tabela[casa]["derrotas"] += 1
-            else:
-                tabela[casa]["empates"] += 1
-                tabela[casa]["pontos"] += 1
-                tabela[fora]["empates"] += 1
-                tabela[fora]["pontos"] += 1
-
-            tabela[casa]["sg"] = tabela[casa]["gp"] - tabela[casa]["gc"]
-            tabela[fora]["sg"] = tabela[fora]["gp"] - tabela[fora]["gc"]
-
-        resultado_final = {}
-        for time_nome, dados in tabela.items():
-            g = dados["grupo"]
-            if g not in resultado_final:
-                resultado_final[g] = []
-            dados["time"] = time_nome
-            resultado_final[g].append(dados)
-
-        for g in resultado_final:
-            resultado_final[g] = sorted(resultado_final[g], key=lambda x: (-x["pontos"], -x["sg"], -x["gp"]))
-
-        return resultado_final
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        if conn: conn.close()
+        raise HTTPException(status_code=500, detail=f"Erro ao processar classificação: {str(e)}")

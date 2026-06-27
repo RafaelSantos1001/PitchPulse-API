@@ -1,53 +1,68 @@
-version: '3.8'
-
 services:
-  
   banco_pitchpulse:
     image: postgres:15
     container_name: container_banco_pitchpulse
     environment:
-      POSTGRES_DB: meu_banco
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: senha_secreta
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: placar_futebol
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - dados_postgres:/var/lib/postgresql/data
+      - pitchpulseapi_dados_postgres:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d placar_futebol"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
     networks:
       - rede_pitchpulse
 
-  
   api_fastapi:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: container_api_pitchpulse
-    command: uvicorn app.api:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/code/app
+      - .:/code
+    environment:
+      - DB_HOST=banco_pitchpulse
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres_password
+      - DB_NAME=placar_futebol
     depends_on:
-      - banco_pitchpulse
+      banco_pitchpulse:
+        condition: service_healthy
+    working_dir: /code
+    # Aponta para o módulo dentro de app (app.api:app) para o Python resolver os caminhos perfeitamente
+    command: uvicorn app.api:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - rede_pitchpulse
 
-
   scraper_futebol:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: container_scraper_pitchpulse
-    command: python app/scraper.py
     volumes:
       - .:/code
     environment:
-      PYTHONUNBUFFERED: "1"
+      - DATABASE_URL=postgresql://postgres:postgres_password@banco_pitchpulse:5432/placar_futebol
     depends_on:
-      - banco_pitchpulse
+      banco_pitchpulse:
+        condition: service_healthy
+    working_dir: /code
+    # Executa o python chamando o caminho completo do arquivo
+    command: python app/scraper.py 
     networks:
       - rede_pitchpulse
+
+volumes:
+  pitchpulseapi_dados_postgres:
 
 networks:
   rede_pitchpulse:
     driver: bridge
-
-volumes:
-  dados_postgres:
