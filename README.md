@@ -1,27 +1,38 @@
-## 🚀 Status Atual do Projeto e Roadmap
+# ⚽ PitchPulse API — Guia Inteligente da Copa do Mundo 2026
 
-O desenvolvimento foi dividido estrategicamente para garantir a consistência dos dados do portfólio. Atualmente, o projeto concluiu a sua prova de conceito básica e está avançando para uma arquitetura profissional desacoplada.
+O **PitchPulse** é um ecossistema completo focado no monitoramento e exibição de dados em tempo real da Copa do Mundo FIFA 2026. A aplicação utiliza uma arquitetura moderna baseada em contêineres para realizar raspagem cirúrgica de dados, armazenamento estruturado e distribuição simplificada via API.
+
+---
+
+## 🚀 Status do Projeto & Roadmap de Desenvolvimento
+
+O projeto foi dividido estrategicamente em fases para garantir escalabilidade, performance e consistência dos dados históricos do portfólio.
 
 ### 📍 Fase 1: Prova de Conceito (Concluída)
-- [x] Criação da infraestrutura básica com Docker Compose (API, Scraper e Banco).
-- [x] Comunicação e tratamento de barreira anti-bot no Scraper Python.
-- [x] Integração do CORS e exibição dos primeiros cards dinâmicos no Frontend.
+- [x] Criação da infraestrutura básica isolada com Docker Compose (API, Scraper e Banco).
+- [x] Comunicação estável e evasão de bloqueios anti-bot (`CloudScraper`) no coletor Python.
+- [x] Integração de regras de CORS e disponibilização dos primeiros endpoints de teste.
 
-### 🎯 Fase 2: Nova Meta — Arquitetura Limpa & Experiência Guia da Copa (Em Andamento)
-O objetivo desta nova fase é remover totalmente as criações de tabelas e estruturas de dentro do código Python, utilizando o banco de dados de forma independente e otimizando a interface do usuário para o formato clássico de Guia de Copa do Mundo.
+### 📍 Fase 2: Arquitetura Limpa & Alta Performance (Concluída)
+- [x] **Banco de Dados Isolado:** Migração completa da DDL para o script nativo `database/init.sql`, permitindo inicialização pura via `/docker-entrypoint-initdb.d`.
+- [x] **Tratamento de Payload Complexo:** Implementação de parsing cirúrgico para as estruturas multinacionais e dicionários de tradução nativos da API da FIFA (`GroupName`, `TeamName`).
+- [x] **Mecanismo de Injeção em Lote:** Otimização do pipeline do Scraper utilizando `execute_batch` do `psycopg2`, reduzindo drasticamente o consumo de CPU e conexões simultâneas (Carga inicial de 104 jogos concluída com sucesso).
+- [x] **Estrutura Dinâmica:** Adaptação do modelo relacional para aceitar os identificadores únicos textuais (`id_match` como `VARCHAR`) do calendário oficial FIFA.
 
-#### 1. Banco de Dados Isolado e Estático
-- [ ] Mover toda a criação de tabelas e inserts iniciais das seleções para o arquivo `init.sql` na pasta `/database`.
-- [ ] Deixar o Postgres inicializar a estrutura nativamente pelo ponto de montagem do Docker (`/docker-entrypoint-initdb.d`).
-- [ ] Ajustar relacionamentos de chaves para mapear os identificadores reais da API da FIFA.
+### 🎯 Fase 3: Próxima Meta — Interface SPA Baseada em Abas (Foco em UX)
+O objetivo agora é remodelar o Dashboard Frontend para consumir os novos endpoints de forma inteligente, transformando-o em uma aplicação de página única (SPA) dividida em três abas:
+- [ ] **🔴 Aba Principal: Ao Vivo** — Exibição imediata de partidas com status ativo. Caso não haja jogos no momento, exibição de um estado amigável (*Empty State*) direcionando para o calendário.
+- [ ] **📊 Aba Grupos** — Classificação automatizada e dinâmica de A a H com tabelas ordenadas por Pontos, Saldo de Gols, Gols Pró e Confronto Direto puxados da API.
+- [ ] **🗓️ Aba Confrontos** — Calendário completo mapeando a jornada de todas as seleções.
 
-#### 2. Coletor Python Cirúrgico e de Alta Performance
-- [ ] Tornar o script Python um agente focado puramente em requisição, tratamento rápido e injeção de dados.
-- [ ] Implementar a estratégia de `execute_batch` para reduzir chamadas ao banco e melhorar consumo de CPU.
-- [ ] Filtrar estritamente as chaves necessárias do payload gigante da FIFA (Placar, Status, Tempo de Jogo, Estádio e Árbitros).
+---
 
-#### 3. Frontend Interativo Baseado em Abas (Foco em UX)
-Remodelar o Dashboard para o formato de aplicação de página única (SPA) dividido em três abas inteligentes de navegação:
-- [ ] **🔴 Aba Principal: Ao Vivo:** Exibição imediata de partidas com status ativo. Caso não haja jogos no momento, exibição de um estado amigável direcionando para o calendário.
-- [ ] **📊 Aba Grupos:** Classificação de A a H com tabelas ordenadas de forma automatizada por Pontos, Saldo de Gols e Gols Pró enviados pela API.
-- [ ] **🗓️ Aba Confrontos:** Calendário completo da Copa com recurso de **Detalhe Ampliado** (janela flutuante/modal ao clicar no card) para expor Estádio, Cidade e Equipe de Arbitragem.
+## 🛠️ Como Executar o Ecossistema
+
+Certifique-se de ter o **Docker** e o **Docker Compose** instalados na sua máquina.
+
+### 1. Inicialização Limpa (Resetando Volumes)
+Para garantir que o banco de dados aplique as tabelas estruturais corretas da FIFA sem conflitos de memória residual:
+```bash
+docker-compose down -v
+docker-compose up --build

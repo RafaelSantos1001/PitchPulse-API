@@ -1,10 +1,9 @@
 import psycopg2
 import os
 
-
 DATABASE_URL = os.getenv(
     "DATABASE_URL", 
-    "postgresql://postgres:senha_secreta@banco_pitchpulse:5432/meu_banco"
+    "postgresql://postgres:postgres_password@localhost:5432/placar_futebol"
 )
 
 def carregar_dados_iniciais():
@@ -15,7 +14,6 @@ def carregar_dados_iniciais():
         conexao = psycopg2.connect(DATABASE_URL)
         cursor = conexao.cursor()
 
-        
         jogos_passados = [
             ('Canadá', 'Catar', 6, 0, 'FIN'),
             ('Suíça', 'Bósnia', 4, 1, 'FIN'),
@@ -29,9 +27,7 @@ def carregar_dados_iniciais():
                 VALUES (%s, %s, %s, %s, %s);
             """, (casa, fora, g_casa, g_fora, status))
 
-        
         dados_grupos = [
-            # Grupo, Time, Pontos, Jogos, Vitórias, Empates, Derrotas, GP, GC, SG
             ('A', 'Canadá', 3, 1, 1, 0, 0, 6, 0, 6),
             ('A', 'Catar', 0, 1, 0, 0, 1, 0, 6, -6),
             ('B', 'Suíça', 3, 1, 1, 0, 0, 4, 1, 3),
@@ -44,17 +40,14 @@ def carregar_dados_iniciais():
         for grupo, time, pts, j, v, e, d, gp, gc, sg in dados_grupos:
             cursor.execute("""
                 INSERT INTO classificacao_grupos (grupo, time_nome, pontos, jogos, vitorias, empates, derrotas, gols_pro, gols_contra, saldo_gols)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (time_nome) DO NOTHING;
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
             """, (grupo, time, pts, j, v, e, d, gp, gc, sg))
 
         conexao.commit()
-        print("✅ Banco de dados alimentado com total sucesso!")
+        print("✅ Dados iniciais injetados com sucesso!")
 
     except Exception as e:
-        print(f"❌ Erro ao rodar o script de carga: {e}")
-        if conexao:
-            conexao.rollback()
+        print(f"❌ Falha ao injetar dados: {e}")
     finally:
         if conexao:
             cursor.close()
