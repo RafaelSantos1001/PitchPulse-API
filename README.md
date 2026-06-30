@@ -16,14 +16,16 @@ O projeto foi dividido estrategicamente em fases para garantir escalabilidade, p
 ### 📍 Fase 2: Arquitetura Limpa & Alta Performance (Concluída)
 - [x] **Banco de Dados Isolado:** Migração completa da DDL para o script nativo `database/init.sql`, permitindo inicialização pura via `/docker-entrypoint-initdb.d`.
 - [x] **Tratamento de Payload Complexo:** Implementação de parsing cirúrgico para as estruturas multinacionais e dicionários de tradução nativos da API da FIFA (`GroupName`, `TeamName`).
-- [x] **Mecanismo de Injeção em Lote:** Otimização do pipeline do Scraper utilizando `execute_batch` do `psycopg2`, reduzindo drasticamente o consumo de CPU e conexões simultâneas (Carga inicial de 104 jogos concluída com sucesso).
+- [x] **Mecanismo de Injeção em Lote:** Otimização do pipeline do Scraper utilizando `execute_batch` do `psycopg2`, reduzindo drasticamente o consumo de CPU e conexões simultâneas.
 - [x] **Estrutura Dinâmica:** Adaptação do modelo relacional para aceitar os identificadores únicos textuais (`id_match` como `VARCHAR`) do calendário oficial FIFA.
 
-### 🎯 Fase 3: Próxima Meta — Interface SPA Baseada em Abas (Foco em UX)
-O objetivo agora é remodelar o Dashboard Frontend para consumir os novos endpoints de forma inteligente, transformando-o em uma aplicação de página única (SPA) dividida em três abas:
-- [ ] **🔴 Aba Principal: Ao Vivo** — Exibição imediata de partidas com status ativo. Caso não haja jogos no momento, exibição de um estado amigável (*Empty State*) direcionando para o calendário.
-- [ ] **📊 Aba Grupos** — Classificação automatizada e dinâmica de A a H com tabelas ordenadas por Pontos, Saldo de Gols, Gols Pró e Confronto Direto puxados da API.
-- [ ] **🗓️ Aba Confrontos** — Calendário completo mapeando a jornada de todas as seleções.
+### 📍 Fase 3: Interface SPA Baseada em Abas (Concluída)
+- [x] **🔴 Aba Principal: Ao Vivo** — Exibição imediata de partidas com status ativo e implementação de *Empty State* amigável quando não há jogos no momento.
+- [x] **📊 Aba Grupos** — Classificação automatizada, modular e dinâmica de A a H com tabelas ordenadas por Pontos, Saldo de Gols e Gols Pró consumidos da API.
+- [x] **🗓️ Aba Confrontos** — Calendário completo em formato de cards mapeando a jornada de todas as seleções.
+
+### 🎯 Fase 4: Próxima Meta — Sincronização do Cronômetro em Tempo Real
+- [ ] **⏱️ Relógio Integrado:** Mapeamento do campo `MatchTime` da FIFA através do pipeline completo (Scraper -> Banco -> API -> Frontend) para exibir os minutos exatos das partidas ao vivo.
 
 ---
 

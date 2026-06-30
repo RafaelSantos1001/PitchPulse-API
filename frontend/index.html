@@ -6,157 +6,67 @@
     <title>PitchPulse API - Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        body {
-            background-color: #0d1117;
-        }
+        body { background-color: #0b0f14; }
+        .glass-panel { background: rgba(22, 27, 34, 0.6); backdrop-filter: blur(12px); }
+        .active-sub-tab { background-color: #161b22; color: #10b981; border-color: rgba(16, 185, 129, 0.3); shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
     </style>
 </head>
-<body class="text-gray-200 font-sans min-h-screen pb-12">
+<body class="text-slate-200 font-sans min-h-screen pb-12 selection:bg-emerald-500 selection:text-black">
 
-    <header class="border-b border-[#30363d] bg-[#161b22] sticky top-0 z-50 shadow-sm backdrop-blur-md bg-opacity-80">
+    <header class="border-b border-slate-800 bg-[#0f141c]/90 sticky top-0 z-50 backdrop-blur-md shadow-lg">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-blue-600 text-white p-2 rounded-lg font-black tracking-wider text-sm shadow-md">PP</div>
-                <h1 class="text-xl font-bold tracking-tight text-white">PitchPulse <span class="text-blue-500 font-medium text-sm">Dashboard</span></h1>
+                <div class="bg-emerald-500 text-slate-950 px-2.5 py-1 rounded font-black tracking-widest text-xs shadow-[0_0_20px_rgba(16,185,129,0.5)]">PULSE</div>
+                <h1 class="text-sm font-mono font-bold tracking-wider text-white uppercase">PitchPulse <span class="text-emerald-400 text-xs lowercase">v2.0</span></h1>
             </div>
-            <div id="status-api" class="text-xs text-gray-400 bg-gray-900 border border-gray-800 px-3 py-1 rounded-md animate-pulse">
-                Conectando à API...
+            <div id="status-api" class="text-[11px] font-mono text-slate-400 bg-[#161f28] border border-slate-800 px-3 py-1 rounded-sm">
+                pinging_system...
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 mt-8 space-y-12">
+    <main class="max-w-4xl mx-auto px-4 mt-8 space-y-8">
         
-        <section>
-            <div class="flex items-center space-x-2 mb-6">
-                <span class="w-2 h-5 bg-blue-500 rounded-full"></span>
-                <h2 class="text-lg font-bold text-white uppercase tracking-wider">Confrontos da Rodada</h2>
+        <section class="space-y-3">
+            <div class="flex items-center space-x-2 font-mono text-xs tracking-widest uppercase text-slate-400">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]"></span>
+                <span>[ Ao Vivo ]</span>
             </div>
-            <div id="grid-confrontos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="text-gray-500 italic text-sm p-4 col-span-full">Aguardando dados dos jogos...</div>
+            <div id="container-ao-vivo" class="w-full">
+                <div class="text-center py-8 glass-panel border border-slate-800/60 rounded-xl text-xs font-mono text-slate-500">
+                    Aguardando sinal dos gramados...
+                </div>
             </div>
         </section>
 
-        <hr class="border-[#30363d]">
+        <section class="glass-panel border border-slate-800/60 rounded-2xl overflow-hidden p-5 space-y-6 shadow-2xl">
+            
+            <div class="flex space-x-2 bg-[#090d12] p-1 rounded-xl border border-slate-800/40 max-w-md">
+                <button data-aba="grupos" class="w-full py-2.5 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
+                    Tabela
+                </button>
+                <button data-aba="confrontos" class="w-full py-2.5 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
+                    Agenda
+                </button>
+                <button data-aba="chaveamento" class="w-full py-2.5 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
+                    Chaveamento
+                </button>
+            </div>
 
-        <section>
-            <div class="flex items-center space-x-2 mb-6">
-                <span class="w-2 h-5 bg-green-500 rounded-full"></span>
-                <h2 class="text-lg font-bold text-white uppercase tracking-wider">Tabelas de Classificação</h2>
+            <div id="conteudo-principal" class="w-full min-h-[250px]">
+                <div class="flex flex-col items-center justify-center pt-12 space-y-3 text-slate-500 text-xs font-mono">
+                    <div class="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Carregando dados estruturados...</span>
+                </div>
             </div>
-            <div id="container-grupos" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="text-gray-500 italic text-sm p-4 col-span-full">Aguardando dados das tabelas...</div>
-            </div>
+
         </section>
 
     </main>
 
-    <script>
-        async function carregarDadosDoDashboard() {
-            try {
-                // 1. CARREGA OS CARDS DE CONFRONTOS DIRETAMENTE DO BANCO
-                const respostaPartidas = await fetch('http://localhost:8000/partidas');
-                const dadosPartidas = await respostaPartidas.json();
-                
-                document.getElementById('status-api').innerText = `Conectado: ${dadosPartidas.total_partidas} Jogos`;
-                document.getElementById('status-api').className = "text-xs text-green-400 bg-green-950/50 border border-green-800 px-3 py-1 rounded-md";
-
-                const grid = document.getElementById('grid-confrontos');
-                grid.innerHTML = ''; 
-
-                dadosPartidas.partidas.forEach(jogo => {
-                    let statusTexto = 'Agendado';
-                    let statusClasse = 'bg-gray-800 text-gray-300';
-                    
-                    if (jogo.status === 3) {
-                        statusTexto = 'Ao Vivo';
-                        statusClasse = 'bg-red-950 text-red-400 border border-red-800 animate-pulse';
-                    } else if (jogo.status === 0) {
-                        statusTexto = 'Encerrado';
-                        statusClasse = 'bg-[#1f242c] text-gray-400 border border-[#30363d]';
-                    }
-
-                    const golsCasa = jogo.gols_casa !== null ? jogo.gols_casa : '-';
-                    const golsFora = jogo.gols_fora !== null ? jogo.gols_fora : '-';
-
-                    grid.innerHTML += `
-                        <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-4 shadow-md hover:border-blue-500/50 transition-all duration-200">
-                            <div class="flex justify-between items-center text-xs text-gray-400 mb-4">
-                                <span class="font-semibold tracking-wider text-gray-400">GRUPO ${jogo.grupo_nome} • #${jogo.id_match}</span>
-                                <span class="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wide ${statusClasse}">${statusTexto}</span>
-                            </div>
-                            <div class="space-y-3">
-                                <div class="flex justify-between items-center">
-                                    <span class="font-medium text-white text-base">${jogo.casa_nome} ${jogo.casa_emoji}</span>
-                                    <span class="text-lg font-bold text-white bg-[#0d1117] border border-[#30363d] px-3 py-1 rounded-lg w-10 text-center shadow-inner">${golsCasa}</span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-medium text-white text-base">${jogo.fora_nome} ${jogo.fora_emoji}</span>
-                                    <span class="text-lg font-bold text-white bg-[#0d1117] border border-[#30363d] px-3 py-1 rounded-lg w-10 text-center shadow-inner">${golsFora}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                // 2. CARREGA AS TABELAS DE CLASSIFICAÇÃO INTEGRADAS POR SQL
-                const respostaGrupos = await fetch('http://localhost:8000/grupos');
-                const dadosGrupos = await respostaGrupos.json();
-
-                const containerGrupos = document.getElementById('container-grupos');
-                containerGrupos.innerHTML = ''; 
-
-                Object.keys(dadosGrupos).forEach(nomeGrupo => {
-                    const times = dadosGrupos[nomeGrupo];
-
-                    let linhasTabelaHtml = '';
-                    times.forEach((time, index) => {
-                        const posClasse = index < 2 ? 'text-blue-400 font-bold' : 'text-gray-500';
-                        const saldoClasse = time.saldo_gols > 0 ? 'text-green-400' : (time.saldo_gols < 0 ? 'text-red-400' : 'text-gray-400');
-                        const sinalSaldo = time.saldo_gols > 0 ? '+' : '';
-
-                        linhasTabelaHtml += `
-                            <tr class="hover:bg-[#1f242c]/50 transition-colors">
-                                <td class="p-3 ${posClasse}">${index + 1}º</td>
-                                <td class="p-3 font-medium text-white">${time.nome}</td>
-                                <td class="p-3 text-center font-bold text-white">${time.points || time.pontos}</td>
-                                <td class="p-3 text-center text-gray-400">${time.jogos}</td>
-                                <td class="p-3 text-center ${saldoClasse}">${sinalSaldo}${time.saldo_gols}</td>
-                            </tr>
-                        `;
-                    });
-
-                    containerGrupos.innerHTML += `
-                        <div class="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-md">
-                            <div class="p-4 bg-[#1f242c] border-b border-[#30363d] font-bold text-white text-sm tracking-wide uppercase">${nomeGrupo}</div>
-                            <table class="w-full text-left text-sm text-gray-300">
-                                <thead class="bg-[#161b22] text-xs text-gray-400 uppercase border-b border-[#30363d]">
-                                    <tr>
-                                        <th class="p-3 w-12">Pos</th>
-                                        <th class="p-3">Seleção</th>
-                                        <th class="p-3 text-center w-12">P</th>
-                                        <th class="p-3 text-center w-12">J</th>
-                                        <th class="p-3 text-center w-12">SG</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-[#30363d]">
-                                    ${linhasTabelaHtml}
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                });
-
-            } catch (erro) {
-                console.error("Erro ao processar dados do Dashboard:", erro);
-                const statusApi = document.getElementById('status-api');
-                statusApi.innerText = "Erro ao Conectar";
-                statusApi.className = "text-xs text-red-400 bg-red-950/50 border border-red-800 px-3 py-1 rounded-md";
-            }
-        }
-
-        // Inicializa a carga de dados na tela
-        carregarDadosDoDashboard();
-    </script>
+<script src="./scripts/ao-vivo.js?v=3"></script>
+    <script src="./scripts/grupos.js?v=3"></script>
+    <script src="./scripts/confrontos.js?v=3"></script>
+    <script src="./scripts/app.js?v=3"></script>
 </body>
 </html>

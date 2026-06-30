@@ -10,9 +10,9 @@ CREATE TABLE IF NOT EXISTS partidas (
     gols_fora INT DEFAULT 0,
     grupo_nome VARCHAR(100),
     casa_nome VARCHAR(100),
-    casa_emoji VARCHAR(10),
+    casa_emoji VARCHAR(255),
     fora_nome VARCHAR(100),
-    fora_emoji VARCHAR(10)
+    fora_emoji VARCHAR(255)
 );
 
 -- Limpa os dados antigos para evitar conflitos na reinicialização do container

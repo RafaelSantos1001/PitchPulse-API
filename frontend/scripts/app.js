@@ -1,74 +1,92 @@
-// Estado Global da Aplicação
 const CONFIG = {
     API_URL: 'http://localhost:8000',
-    abaAtiva: 'ao-vivo' // Aba padrão inicial
+    abaAtiva: 'grupos'
 };
 
-let dadosCopa = { total_partidas: 0, partidas: [] };
+let dadosCopa = []; 
+let dadosClassificacao = {}; 
 
-// Inicialização automatizada
 async function iniciarApp() {
     configurarAbas();
     await carregarDados();
 }
 
-// Coleta os dados da API local
 async function carregarDados() {
     try {
-        const resposta = await fetch(`${CONFIG.API_URL}/partidas`);
-        if (!resposta.ok) throw new Error("Erro na requisição");
-        
-        dadosCopa = await resposta.json();
-        
         const statusApi = document.getElementById('status-api');
-        if (statusApi) {
-            statusApi.innerText = "Conectado";
-            statusApi.className = "text-xs text-green-400 bg-green-950/50 border border-green-800 px-3 py-1 rounded-md";
+
+        // 1. Busca as partidas
+        const resPartidas = await fetch(`${CONFIG.API_URL}/partidas`);
+        if (!resPartidas.ok) throw new Error("Erro ao carregar partidas");
+        const jsonPartidas = await resPartidas.json();
+        dadosCopa = Array.isArray(jsonPartidas) ? jsonPartidas : (jsonPartidas.partidas || []);
+        
+        // 2. Busca os grupos
+        const resClassificacao = await fetch(`${CONFIG.API_URL}/classificacao`);
+        if (resClassificacao.ok) {
+            dadosClassificacao = await resClassificacao.json();
         }
 
-        // Renderiza a aba atual
+        if (statusApi) {
+            statusApi.innerText = "online_sync";
+            statusApi.className = "text-[11px] font-mono text-emerald-400 bg-emerald-950/30 border border-emerald-800/50 px-3 py-1 rounded-sm shadow-[0_0_10px_rgba(16,185,129,0.1)]";
+        }
+
         renderizarAbaAtual();
 
     } catch (erro) {
         console.error("Erro ao conectar na API PitchPulse:", erro);
         const statusApi = document.getElementById('status-api');
         if (statusApi) {
-            statusApi.innerText = "Erro de Conexão";
-            statusApi.className = "text-xs text-red-400 bg-red-950/50 border border-red-800 px-3 py-1 rounded-md";
+            statusApi.innerText = "offline_error";
+            statusApi.className = "text-[11px] font-mono text-red-400 bg-red-950/30 border border-red-800/50 px-3 py-1 rounded-sm";
         }
+        // Mesmo em erro, limpa o esqueleto para o usuário ver o painel
+        renderizarAbaAtual();
     }
 }
 
-// Configura os ouvintes de cliques nos botões de abas
 function configurarAbas() {
     const botoes = document.querySelectorAll('[data-aba]');
     botoes.forEach(botao => {
         botao.addEventListener('click', () => {
-            botoes.forEach(b => b.classList.remove('border-blue-500', 'text-blue-500'));
-            botao.classList.add('border-blue-500', 'text-blue-500');
-            
-            CONFIG.abaAtiva = Math.abs(botao.getAttribute('data-aba')) ? 'ao-vivo' : botao.getAttribute('data-aba');
-            
-            // Tratamento simplificado para ler o atributo customizado
             CONFIG.abaAtiva = botao.getAttribute('data-aba');
             renderizarAbaAtual();
         });
     });
 }
 
-// Distribui a responsabilidade de renderização
 function renderizarAbaAtual() {
-    const container = document.getElementById('conteudo-principal');
-    if (!container) return;
+    const containerAoVivo = document.getElementById('container-ao-vivo');
+    const containerPrincipal = document.getElementById('conteudo-principal');
+    const botoes = document.querySelectorAll('[data-aba]');
 
-    container.innerHTML = ''; // Limpa a área de conteúdo
+    botoes.forEach(b => {
+        if (b.getAttribute('data-aba') === CONFIG.abaAtiva) {
+            b.className = "w-full py-2.5 text-xs font-mono tracking-wider uppercase rounded-lg bg-[#161b22] text-emerald-400 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)] transition-all cursor-pointer";
+        } else {
+            b.className = "w-full py-2.5 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white border border-transparent transition-all cursor-pointer";
+        }
+    });
 
-    if (CONFIG.abaAtiva === 'ao-vivo') {
-        renderizarAoVivo(container, dadosCopa.partidas);
-    } else if (CONFIG.abaAtiva === 'grupos') {
-        renderizarGrupos(container, dadosCopa.partidas);
-    } else if (CONFIG.abaAtiva === 'confrontos') {
-        renderizarConfrontos(container, dadosCopa.partidas);
+    if (containerAoVivo) {
+        containerAoVivo.innerHTML = '';
+        renderizarAoVivo(containerAoVivo, dadosCopa);
+    }
+
+    if (containerPrincipal) {
+        containerPrincipal.innerHTML = '';
+
+        if (CONFIG.abaAtiva === 'grupos') {
+            renderizarGrupos(containerPrincipal, dadosClassificacao);
+        } else if (CONFIG.abaAtiva === 'confrontos') {
+            renderizarConfrontos(containerPrincipal, dadosCopa);
+        } else if (CONFIG.abaAtiva === 'chaveamento') {
+            containerPrincipal.innerHTML = `
+                <div class="text-center py-12 text-xs font-mono text-slate-500 uppercase tracking-widest pt-16">
+                    [ ⚠️ fase de grupos em andamento / chaveamento indisponível ]
+                </div>`;
+        }
     }
 }
 

@@ -2,7 +2,35 @@ import os
 import time
 import psycopg2
 from psycopg2.extras import execute_batch
-import cloudscraper 
+import cloudscraper
+
+# ========================================================
+# BANDEIRAS: usa o link de imagem que a própria FIFA já fornece
+# ========================================================
+# Cada time no payload da FIFA já vem com "PictureUrl", um link com
+# placeholders {format} e {size} prontos pra usar. Não precisamos
+# manter nenhuma tabela de mapeamento de país — é só preencher
+# esses dois placeholders.
+#
+# Exemplo recebido da API:
+#   "https://api.fifa.com/api/v3/picture/flags-{format}-{size}/MEX"
+# Vira:
+#   "https://api.fifa.com/api/v3/picture/flags-sq-2/MEX"
+
+FORMATO_BANDEIRA = "sq"
+TAMANHO_BANDEIRA = "2"
+
+
+def montar_url_bandeira(picture_url_template):
+    """Preenche os placeholders {format}/{size} do PictureUrl da FIFA."""
+    if not picture_url_template or not isinstance(picture_url_template, str):
+        return None
+    return (
+        picture_url_template
+        .replace("{format}", FORMATO_BANDEIRA)
+        .replace("{size}", TAMANHO_BANDEIRA)
+    )
+
 
 def puxar_dados_fifa():
     url = "https://api.fifa.com/api/v3/calendar/matches?language=en&count=500&idSeason=285023"
@@ -73,8 +101,9 @@ def rodar_coletor():
         elif isinstance(fora_info.get("TeamName"), str):
             fora_nome = fora_info["TeamName"]
         
-        casa_emoji = "🏳️"
-        fora_emoji = "🏳️"
+        # TRATAMENTO CIRÚRGICO: Monta a URL real da bandeira a partir do PictureUrl da FIFA
+        casa_emoji = montar_url_bandeira(casa_info.get("PictureUrl"))
+        fora_emoji = montar_url_bandeira(fora_info.get("PictureUrl"))
         
         if id_match is None: 
             continue
@@ -94,7 +123,9 @@ def rodar_coletor():
             gols_fora = EXCLUDED.gols_fora,
             grupo_nome = EXCLUDED.grupo_nome,
             casa_nome = EXCLUDED.casa_nome,
-            fora_nome = EXCLUDED.fora_nome;
+            casa_emoji = EXCLUDED.casa_emoji,
+            fora_nome = EXCLUDED.fora_nome,
+            fora_emoji = EXCLUDED.fora_emoji;
     """
 
     try:
