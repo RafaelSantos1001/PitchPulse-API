@@ -1,6 +1,7 @@
 const CONFIG = {
     API_URL: 'http://localhost:8000',
-    abaAtiva: 'grupos'
+    abaAtiva: 'grupos',
+    INTERVALO_ATUALIZACAO_MS: 60 * 1000 // busca dados novos a cada 1 minuto
 };
 
 let dadosCopa = []; 
@@ -9,6 +10,13 @@ let dadosClassificacao = {};
 async function iniciarApp() {
     configurarAbas();
     await carregarDados();
+    iniciarAtualizacaoAutomatica();
+}
+
+function iniciarAtualizacaoAutomatica() {
+    setInterval(() => {
+        carregarDados();
+    }, CONFIG.INTERVALO_ATUALIZACAO_MS);
 }
 
 async function carregarDados() {
@@ -21,6 +29,7 @@ async function carregarDados() {
         const jsonPartidas = await resPartidas.json();
         dadosCopa = Array.isArray(jsonPartidas) ? jsonPartidas : (jsonPartidas.partidas || []);
         
+        // 2. Busca os grupos
         const resClassificacao = await fetch(`${CONFIG.API_URL}/classificacao`);
         if (resClassificacao.ok) {
             dadosClassificacao = await resClassificacao.json();

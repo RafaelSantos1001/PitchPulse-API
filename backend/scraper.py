@@ -75,6 +75,7 @@ def rodar_coletor():
         casa_info = jogo.get("Home", {}) or {}
         fora_info = jogo.get("Away", {}) or {}
         
+
         casa_nome = "A Definir"
         if casa_info.get("TeamName") and isinstance(casa_info["TeamName"], list) and len(casa_info["TeamName"]) > 0:
             casa_nome = casa_info["TeamName"][0].get("Description", "A Definir")
@@ -87,12 +88,15 @@ def rodar_coletor():
         elif isinstance(fora_info.get("TeamName"), str):
             fora_nome = fora_info["TeamName"]
         
+
         casa_emoji = montar_url_bandeira(casa_info.get("PictureUrl"))
         fora_emoji = montar_url_bandeira(fora_info.get("PictureUrl"))
+
 
         tempo_jogo = jogo.get("MatchTime") or None
 
         data_jogo = jogo.get("LocalDate") or jogo.get("Date") or None
+
 
         stadium_info = jogo.get("Stadium", {}) or {}
         estadio_nome = None
@@ -112,10 +116,12 @@ def rodar_coletor():
         else:
             estadio_completo = None
 
+
         fase_lista = jogo.get("StageName", [])
         fase_nome = None
         if fase_lista and isinstance(fase_lista, list) and len(fase_lista) > 0:
             fase_nome = fase_lista[0].get("Description")
+
 
         numero_jogo = jogo.get("MatchNumber")
         
@@ -160,4 +166,17 @@ def rodar_coletor():
         conn.close()
 
 if __name__ == "__main__":
-    rodar_coletor()
+
+    INTERVALO_SEGUNDOS = int(os.getenv("SCRAPER_INTERVALO_SEGUNDOS", "60"))
+
+    print(f"🔁 [Scraper] Modo contínuo ativado — coletando a cada {INTERVALO_SEGUNDOS}s.")
+
+    while True:
+        try:
+            rodar_coletor()
+        except Exception as e:
+
+            print(f"❌ [Scraper] Erro inesperado no ciclo de coleta: {e}")
+
+        print(f"⏳ [Scraper] Aguardando {INTERVALO_SEGUNDOS}s até a próxima coleta...")
+        time.sleep(INTERVALO_SEGUNDOS)
