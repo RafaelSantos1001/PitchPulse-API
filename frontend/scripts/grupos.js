@@ -1,10 +1,6 @@
 function renderizarGrupos(container, dadosClassificacao) {
     let html = `<div class=\"grid grid-cols-1 lg:grid-cols-2 gap-8 w-full\">`;
 
-    // Mostra só os grupos reais da fase de grupos (A, B, C...).
-    // "Fase Final" é o fallback usado pra jogos do mata-mata que ainda
-    // não têm grupo definido (times só confirmados depois da fase de grupos),
-    // então não faz sentido aparecer numa tabela de classificação.
     Object.keys(dadosClassificacao)
         .filter(grupo => grupo !== 'Fase Final')
         .sort()
@@ -30,7 +26,6 @@ function renderizarGrupos(container, dadosClassificacao) {
         `;
 
         dadosClassificacao[grupo].forEach((time, index) => {
-            // Mapeia os campos retornados pela API (backend usa prefixo "time_")
             const nomeTime = time.time_nome || time.name || time.nome || 'Desconhecido';
             const emojiTime = time.time_emoji || time.emoji || '';
             const pontosTime = time.points !== undefined ? time.points : (time.pontos !== undefined ? time.pontos : 0);

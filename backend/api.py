@@ -41,9 +41,10 @@ def listar_partidas():
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("""
             SELECT id_match, status, gols_casa, gols_fora, grupo_nome, 
-                   casa_nome, casa_emoji, fora_nome, fora_emoji 
+                   casa_nome, casa_emoji, fora_nome, fora_emoji, tempo_jogo,
+                   data_jogo, estadio_nome, fase_nome, numero_jogo
             FROM partidas 
-            ORDER BY id_match ASC;
+            ORDER BY numero_jogo ASC NULLS LAST, id_match ASC;
         """)
         partidas = cursor.fetchall()
         cursor.close()

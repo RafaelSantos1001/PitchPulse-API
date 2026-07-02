@@ -21,7 +21,6 @@ async function carregarDados() {
         const jsonPartidas = await resPartidas.json();
         dadosCopa = Array.isArray(jsonPartidas) ? jsonPartidas : (jsonPartidas.partidas || []);
         
-        // 2. Busca os grupos
         const resClassificacao = await fetch(`${CONFIG.API_URL}/classificacao`);
         if (resClassificacao.ok) {
             dadosClassificacao = await resClassificacao.json();
@@ -41,7 +40,6 @@ async function carregarDados() {
             statusApi.innerText = "offline_error";
             statusApi.className = "text-[11px] font-mono text-red-400 bg-red-950/30 border border-red-800/50 px-3 py-1 rounded-sm";
         }
-        // Mesmo em erro, limpa o esqueleto para o usuário ver o painel
         renderizarAbaAtual();
     }
 }
@@ -82,10 +80,7 @@ function renderizarAbaAtual() {
         } else if (CONFIG.abaAtiva === 'confrontos') {
             renderizarConfrontos(containerPrincipal, dadosCopa);
         } else if (CONFIG.abaAtiva === 'chaveamento') {
-            containerPrincipal.innerHTML = `
-                <div class="text-center py-12 text-xs font-mono text-slate-500 uppercase tracking-widest pt-16">
-                    [ ⚠️ fase de grupos em andamento / chaveamento indisponível ]
-                </div>`;
+            renderizarChaveamento(containerPrincipal, dadosCopa);
         }
     }
 }

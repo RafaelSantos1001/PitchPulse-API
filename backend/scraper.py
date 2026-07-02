@@ -4,18 +4,6 @@ import psycopg2
 from psycopg2.extras import execute_batch
 import cloudscraper
 
-# ========================================================
-# BANDEIRAS: usa o link de imagem que a própria FIFA já fornece
-# ========================================================
-# Cada time no payload da FIFA já vem com "PictureUrl", um link com
-# placeholders {format} e {size} prontos pra usar. Não precisamos
-# manter nenhuma tabela de mapeamento de país — é só preencher
-# esses dois placeholders.
-#
-# Exemplo recebido da API:
-#   "https://api.fifa.com/api/v3/picture/flags-{format}-{size}/MEX"
-# Vira:
-#   "https://api.fifa.com/api/v3/picture/flags-sq-2/MEX"
 
 FORMATO_BANDEIRA = "sq"
 TAMANHO_BANDEIRA = "2"
@@ -79,7 +67,6 @@ def rodar_coletor():
         g_casa = jogo.get("HomeTeamScore") if jogo.get("HomeTeamScore") is not None else 0
         g_fora = jogo.get("AwayTeamScore") if jogo.get("AwayTeamScore") is not None else 0
         
-        # TRATAMENTO CIRÚRGICO: Extrai a string limpa de dentro da estrutura de tradução da FIFA
         grupo_lista = jogo.get("GroupName", [])
         grupo_nome = "Fase Final"
         if grupo_lista and isinstance(grupo_lista, list) and len(grupo_lista) > 0:
@@ -88,7 +75,6 @@ def rodar_coletor():
         casa_info = jogo.get("Home", {}) or {}
         fora_info = jogo.get("Away", {}) or {}
         
-        # TRATAMENTO CIRÚRGICO: Garante o nome limpo em string dos times
         casa_nome = "A Definir"
         if casa_info.get("TeamName") and isinstance(casa_info["TeamName"], list) and len(casa_info["TeamName"]) > 0:
             casa_nome = casa_info["TeamName"][0].get("Description", "A Definir")
@@ -101,23 +87,54 @@ def rodar_coletor():
         elif isinstance(fora_info.get("TeamName"), str):
             fora_nome = fora_info["TeamName"]
         
-        # TRATAMENTO CIRÚRGICO: Monta a URL real da bandeira a partir do PictureUrl da FIFA
         casa_emoji = montar_url_bandeira(casa_info.get("PictureUrl"))
         fora_emoji = montar_url_bandeira(fora_info.get("PictureUrl"))
+
+        tempo_jogo = jogo.get("MatchTime") or None
+
+        data_jogo = jogo.get("LocalDate") or jogo.get("Date") or None
+
+        stadium_info = jogo.get("Stadium", {}) or {}
+        estadio_nome = None
+        nome_lista = stadium_info.get("Name", [])
+        if nome_lista and isinstance(nome_lista, list) and len(nome_lista) > 0:
+            estadio_nome = nome_lista[0].get("Description")
+
+        cidade_nome = None
+        cidade_lista = stadium_info.get("CityName", [])
+        if cidade_lista and isinstance(cidade_lista, list) and len(cidade_lista) > 0:
+            cidade_nome = cidade_lista[0].get("Description")
+
+        if estadio_nome and cidade_nome:
+            estadio_completo = f"{estadio_nome} ({cidade_nome})"
+        elif estadio_nome:
+            estadio_completo = estadio_nome
+        else:
+            estadio_completo = None
+
+        fase_lista = jogo.get("StageName", [])
+        fase_nome = None
+        if fase_lista and isinstance(fase_lista, list) and len(fase_lista) > 0:
+            fase_nome = fase_lista[0].get("Description")
+
+        numero_jogo = jogo.get("MatchNumber")
         
         if id_match is None: 
             continue
             
         dados_para_salvar.append((
             str(id_match), status, g_casa, g_fora, str(grupo_nome), 
-            str(casa_nome), casa_emoji, str(fora_nome), fora_emoji
+            str(casa_nome), casa_emoji, str(fora_nome), fora_emoji, tempo_jogo,
+            data_jogo, estadio_completo, fase_nome, numero_jogo
         ))
 
     query = """
-        INSERT INTO partidas (id_match, status, gols_casa, gols_fora, grupo_nome, casa_nome, casa_emoji, fora_nome, fora_emoji)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO partidas (id_match, status, gols_casa, gols_fora, grupo_nome, casa_nome, casa_emoji, fora_nome, fora_emoji, tempo_jogo, data_jogo, estadio_nome, fase_nome, numero_jogo)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (id_match) 
         DO UPDATE SET 
+            fase_nome = EXCLUDED.fase_nome,
+            numero_jogo = EXCLUDED.numero_jogo,
             status = EXCLUDED.status,
             gols_casa = EXCLUDED.gols_casa,
             gols_fora = EXCLUDED.gols_fora,
@@ -125,7 +142,10 @@ def rodar_coletor():
             casa_nome = EXCLUDED.casa_nome,
             casa_emoji = EXCLUDED.casa_emoji,
             fora_nome = EXCLUDED.fora_nome,
-            fora_emoji = EXCLUDED.fora_emoji;
+            fora_emoji = EXCLUDED.fora_emoji,
+            tempo_jogo = EXCLUDED.tempo_jogo,
+            data_jogo = EXCLUDED.data_jogo,
+            estadio_nome = EXCLUDED.estadio_nome;
     """
 
     try:

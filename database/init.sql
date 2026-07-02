@@ -1,8 +1,3 @@
--- ========================================================
--- PITCHPULSE API - CONFIGURAÇÃO NATIVA DA FASE 2
--- ========================================================
-
--- Criação da tabela principal adaptada para os dados reais da FIFA
 CREATE TABLE IF NOT EXISTS partidas (
     id_match VARCHAR(50) PRIMARY KEY,
     status VARCHAR(10),
@@ -12,8 +7,12 @@ CREATE TABLE IF NOT EXISTS partidas (
     casa_nome VARCHAR(100),
     casa_emoji VARCHAR(255),
     fora_nome VARCHAR(100),
-    fora_emoji VARCHAR(255)
+    fora_emoji VARCHAR(255),
+    tempo_jogo VARCHAR(10),
+    data_jogo TIMESTAMP,
+    estadio_nome VARCHAR(150),
+    fase_nome VARCHAR(100),
+    numero_jogo INT
 );
 
--- Limpa os dados antigos para evitar conflitos na reinicialização do container
 TRUNCATE TABLE partidas CASCADE;
