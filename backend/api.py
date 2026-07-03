@@ -16,6 +16,11 @@ app.add_middleware(
 
 def obter_conexao_banco():
     try:
+        database_url = os.getenv("DATABASE_URL")
+        if database_url:
+            conn = psycopg2.connect(database_url)
+            return conn
+
         conn = psycopg2.connect(
             host=os.getenv("DB_HOST", "banco_pitchpulse"),
             database=os.getenv("DB_NAME", "placar_futebol"),
@@ -67,7 +72,6 @@ def obter_classificacao():
         cursor.close()
         conn.close()
 
-        # Processamento dinâmico dos grupos baseado nos jogos reais do banco
         grupos = {}
         for jogo in jogos:
             nome_grupo = jogo["grupo_nome"] or "Outros"

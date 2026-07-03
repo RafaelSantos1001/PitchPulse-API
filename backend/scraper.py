@@ -35,14 +35,17 @@ def puxar_dados_fifa():
 
 def rodar_coletor():
     print("🚀 [Scraper] Coletor cirúrgico da Fase 2 iniciado...")
-    
-    host = os.getenv("DB_HOST", "banco_pitchpulse")
-    user = os.getenv("DB_USER", "postgres")
-    password = os.getenv("DB_PASSWORD", "postgres_password")
-    dbname = os.getenv("DB_NAME", "placar_futebol")
 
     try:
-        conn = psycopg2.connect(host=host, user=user, password=password, database=dbname)
+        database_url = os.getenv("DATABASE_URL")
+        if database_url:
+            conn = psycopg2.connect(database_url)
+        else:
+            host = os.getenv("DB_HOST", "banco_pitchpulse")
+            user = os.getenv("DB_USER", "postgres")
+            password = os.getenv("DB_PASSWORD", "postgres_password")
+            dbname = os.getenv("DB_NAME", "placar_futebol")
+            conn = psycopg2.connect(host=host, user=user, password=password, database=dbname)
         cursor = conn.cursor()
     except Exception as e:
         print(f"❌ [Scraper] Não conseguiu conectar ao banco: {e}")
@@ -75,7 +78,6 @@ def rodar_coletor():
         casa_info = jogo.get("Home", {}) or {}
         fora_info = jogo.get("Away", {}) or {}
         
-
         casa_nome = "A Definir"
         if casa_info.get("TeamName") and isinstance(casa_info["TeamName"], list) and len(casa_info["TeamName"]) > 0:
             casa_nome = casa_info["TeamName"][0].get("Description", "A Definir")
@@ -88,15 +90,12 @@ def rodar_coletor():
         elif isinstance(fora_info.get("TeamName"), str):
             fora_nome = fora_info["TeamName"]
         
-
         casa_emoji = montar_url_bandeira(casa_info.get("PictureUrl"))
         fora_emoji = montar_url_bandeira(fora_info.get("PictureUrl"))
-
 
         tempo_jogo = jogo.get("MatchTime") or None
 
         data_jogo = jogo.get("LocalDate") or jogo.get("Date") or None
-
 
         stadium_info = jogo.get("Stadium", {}) or {}
         estadio_nome = None
@@ -116,12 +115,10 @@ def rodar_coletor():
         else:
             estadio_completo = None
 
-
         fase_lista = jogo.get("StageName", [])
         fase_nome = None
         if fase_lista and isinstance(fase_lista, list) and len(fase_lista) > 0:
             fase_nome = fase_lista[0].get("Description")
-
 
         numero_jogo = jogo.get("MatchNumber")
         
@@ -166,6 +163,14 @@ def rodar_coletor():
         conn.close()
 
 if __name__ == "__main__":
+
+    LOOP_CONTINUO = os.getenv("SCRAPER_LOOP_CONTINUO", "true").lower() not in ("false", "0", "nao", "não")
+
+    if not LOOP_CONTINUO:
+        print("▶️ [Scraper] Modo execução única (SCRAPER_LOOP_CONTINUO=false).")
+        rodar_coletor()
+        raise SystemExit(0)
+
 
     INTERVALO_SEGUNDOS = int(os.getenv("SCRAPER_INTERVALO_SEGUNDOS", "60"))
 

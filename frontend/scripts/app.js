@@ -23,13 +23,11 @@ async function carregarDados() {
     try {
         const statusApi = document.getElementById('status-api');
 
-        // 1. Busca as partidas
         const resPartidas = await fetch(`${CONFIG.API_URL}/partidas`);
         if (!resPartidas.ok) throw new Error("Erro ao carregar partidas");
         const jsonPartidas = await resPartidas.json();
         dadosCopa = Array.isArray(jsonPartidas) ? jsonPartidas : (jsonPartidas.partidas || []);
         
-        // 2. Busca os grupos
         const resClassificacao = await fetch(`${CONFIG.API_URL}/classificacao`);
         if (resClassificacao.ok) {
             dadosClassificacao = await resClassificacao.json();
