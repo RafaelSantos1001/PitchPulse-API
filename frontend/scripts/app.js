@@ -1,5 +1,5 @@
 const CONFIG = {
-    API_URL: 'http://localhost:8000',
+    API_URL: 'https://pitchpulse-api-5eer.onrender.com',
     abaAtiva: 'grupos',
     INTERVALO_ATUALIZACAO_MS: 60 * 1000 // busca dados novos a cada 1 minuto
 };
