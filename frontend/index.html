@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PitchPulse API - Dashboard</title>
+    <title>PitchPulse — Guia da Copa do Mundo</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body { background-color: #0b0f14; }
@@ -17,7 +17,7 @@
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="bg-emerald-500 text-slate-950 px-2.5 py-1 rounded font-black tracking-widest text-xs shadow-[0_0_20px_rgba(16,185,129,0.5)]">PULSE</div>
-                <h1 class="text-sm font-mono font-bold tracking-wider text-white uppercase">PitchPulse <span class="text-emerald-400 text-xs lowercase">v2.0</span></h1>
+                <h1 class="text-sm font-mono font-bold tracking-wider text-white uppercase">PitchPulse <span class="text-emerald-400 text-xs lowercase">v3.0</span></h1>
             </div>
             <div id="status-api" class="text-[11px] font-mono text-slate-400 bg-[#161f28] border border-slate-800 px-3 py-1 rounded-sm">
                 pinging_system...
@@ -27,47 +27,53 @@
 
     <main class="max-w-4xl mx-auto px-4 mt-8 space-y-8">
         
-        <section class="space-y-3">
+        <section id="secao-ao-vivo" class="space-y-3" style="display:none">
             <div class="flex items-center space-x-2 font-mono text-xs tracking-widest uppercase text-slate-400">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]"></span>
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#ef4444]"></span>
                 <span>[ Ao Vivo ]</span>
             </div>
-            <div id="container-ao-vivo" class="w-full">
-                <div class="text-center py-8 glass-panel border border-slate-800/60 rounded-xl text-xs font-mono text-slate-500">
-                    Aguardando sinal dos gramados...
-                </div>
-            </div>
+            <div id="container-ao-vivo" class="w-full"></div>
         </section>
 
         <section class="glass-panel border border-slate-800/60 rounded-2xl overflow-hidden p-5 space-y-6 shadow-2xl">
-            
-            <div class="flex space-x-2 bg-[#090d12] p-1 rounded-xl border border-slate-800/40 max-w-md">
-                <button data-aba="grupos" class="w-full py-2.5 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
+
+            <div class="flex flex-wrap gap-2 bg-[#090d12] p-1.5 rounded-xl border border-slate-800/40">
+                <button data-aba="copa2026" class="flex-1 min-w-[88px] py-2.5 px-3 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
+                    Copa 2026
+                </button>
+                <button data-aba="historia" class="flex-1 min-w-[88px] py-2.5 px-3 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
+                    História
+                </button>
+                <button data-aba="recordes" class="flex-1 min-w-[88px] py-2.5 px-3 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
+                    Recordes
+                </button>
+                <button data-aba="curiosidades" class="flex-1 min-w-[88px] py-2.5 px-3 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
+                    Curiosidades
+                </button>
+                <span class="w-px self-stretch bg-slate-800/60 mx-1 hidden sm:block"></span>
+                <button data-aba="grupos" class="flex-1 min-w-[80px] py-2.5 px-3 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
                     Tabela
                 </button>
-                <button data-aba="confrontos" class="w-full py-2.5 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
+                <button data-aba="confrontos" class="flex-1 min-w-[80px] py-2.5 px-3 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
                     Agenda
                 </button>
-                <button data-aba="chaveamento" class="w-full py-2.5 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
+                <button data-aba="chaveamento" class="flex-1 min-w-[80px] py-2.5 px-3 text-xs font-mono tracking-wider uppercase rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer border border-transparent">
                     Chaveamento
                 </button>
             </div>
 
-            <div id="conteudo-principal" class="w-full min-h-[250px]">
-                <div class="flex flex-col items-center justify-center pt-12 space-y-3 text-slate-500 text-xs font-mono">
-                    <div class="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                    <span>Carregando dados estruturados...</span>
-                </div>
-            </div>
+            <div id="conteudo-principal" class="w-full min-h-[250px]"></div>
 
         </section>
 
     </main>
 
-    <script src="./scripts/ao-vivo.js?v=3"></script>
-    <script src="./scripts/grupos.js?v=3"></script>
-    <script src="./scripts/confrontos.js?v=3"></script>
-    <script src="./scripts/chaveamento.js?v=3"></script>
-    <script src="./scripts/app.js?v=3"></script>
+    <script src="./scripts/dados-copa.js?v=4"></script>
+    <script src="./scripts/enciclopedia.js?v=4"></script>
+    <script src="./scripts/ao-vivo.js?v=4"></script>
+    <script src="./scripts/grupos.js?v=4"></script>
+    <script src="./scripts/confrontos.js?v=4"></script>
+    <script src="./scripts/chaveamento.js?v=4"></script>
+    <script src="./scripts/app.js?v=4"></script>
 </body>
 </html>
